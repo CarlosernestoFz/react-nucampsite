@@ -1,8 +1,120 @@
 import React, { Component } from 'react';
-import { Card, CardImg, CardImgOverlay, CardText, CardBody, CardTitle, Breadcrumb, BreadcrumbItem } from 'reactstrap';
+import { Card, CardImg, CardImgOverlay, CardText, CardBody, CardTitle, Breadcrumb, BreadcrumbItem, Button, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Label } from 'reactstrap';
 import { Link } from 'react-router-dom';
+import { Control, controls, Errors, LocalForm } from 'react-redux-form';
+import { Loading } from './LoadingComponent';
 
-     
+
+const required = val => val && val.length;
+const maxLength = len => val => !val || (val.length <= len);
+const minLength = len => val => val && (val.length >= len);
+
+class CommentForm extends Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+
+            rating: "",
+            author: "",
+            text: "",
+          isModalOpen: false,
+          touched: {
+              author: false,
+              rating: false,
+              author: false,
+              text: false
+              
+          }
+        };
+
+        this.toggleModal = this.toggleModal.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    toggleModal() {
+        this.setState({
+             isModalOpen: !this.state.isModalOpen
+         });
+        }
+
+        handleSubmit(values) {
+            this.toggleModal();
+            this.props.addComment(this.props.campsiteId, values.rating, values.author, values.text);
+        }
+
+    render() {
+
+        return(
+            <React.Fragment>
+                
+            <Button  className="fa fa-pencil fa-lg" outline onClick={this.toggleModal} outline color="secondary">Submit Comment</Button>
+            <Modal isOpen={this.state.isModalOpen} toggle={this.toggleModal}>
+                <LocalForm onSubmit={values => this.handleSubmit(values)}>
+
+                    <ModalHeader toggle={this.toggleModal}> Submit Comment  </ModalHeader> 
+                    <ModalBody>
+
+                    <div ClassName="form-group">
+                        <Label htmlFor="rating">Rating</Label>
+                        <Control.select
+                        className="form-control row-6" 
+                        model=".rating" 
+                        id="rating" 
+                        name="rating">
+    
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </Control.select>
+                    </div>
+
+
+                    <div className="form-group">
+                        <Label htmlFor="author">Your Name</Label>
+                            <Control.text 
+                            className="form-control row-6" 
+                            model=".author" 
+                            id="author" 
+                            name="author"
+                            validators={{
+                                required,
+                                minLength: minLength(2),
+                                maxLength: maxLength(15)
+                                    
+                            }}
+                            />
+                            <Errors
+                            className="text-danger"
+                            model=".author"
+                            show="touched"
+                            messages= {{
+                                required: 'Required',
+                                minLength: 'Must be at least 2 characters',
+                                maxLength: 'Must be 15 characters or less'
+                            }}
+                            />
+                            
+                    </div>
+
+
+
+                    <div className="form-group">
+                        <Label htmlFor="Comment">Comment</Label>
+                            <Control.textarea   className="form-control row-6"  model=".text" id="text" name="text"> </Control.textarea>
+                    </div>
+                    <Button type="submit" value="submit" color="primary">Submit</Button>
+                        </ModalBody>      
+                </LocalForm>
+                
+            </Modal>
+            
+            </React.Fragment>
+        )
+    }
+}
 
      function RenderCampsite({campsite}) {
 
@@ -18,7 +130,7 @@ import { Link } from 'react-router-dom';
            
         );
     }
-     function RenderComments({comments}) {
+     function RenderComments({comments, addComment, campsiteId}) {
 
         if(comments) {
 
@@ -30,7 +142,10 @@ import { Link } from 'react-router-dom';
                     {comments.map(comment => <div key ={comment.id}> 
                     <p> {comment.text} <br/> {comment.author} {new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: '2-digit'}).format(new Date(Date.parse(comment.date)))}
                     </p>
-                    </div>  )};
+                    </div>)}
+                    <div>
+                    <CommentForm campsiteId={campsiteId} addComment={addComment}/>
+                    </div>
                 </div>
             ); 
         }
@@ -38,6 +153,26 @@ import { Link } from 'react-router-dom';
     }
 
     function CampsiteInfo(props) {
+        if (props.isLoading) {
+            return (
+                <div className="container">
+                    <div className="row">
+                        <Loading />
+                    </div>
+                </div>
+            );
+        }
+        if (props.errMess) {
+            return (
+                <div className="container">
+                    <div className="row">
+                        <div className="col">
+                            <h4>{props.errMess}</h4>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         if (props.campsite) {
             return (
                 <div className="container">
@@ -53,7 +188,10 @@ import { Link } from 'react-router-dom';
             </div>
                     <div className="row">
                         <RenderCampsite campsite={props.campsite} />
-                        <RenderComments comments={props.comments} />
+                        <RenderComments 
+                        comments={props.comments} 
+                        addComment={props.addComment}
+                        campsiteId={props.campsite.id}/>
                     </div>
                 </div>
             );
