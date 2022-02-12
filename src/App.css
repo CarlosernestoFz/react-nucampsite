@@ -31,3 +31,24 @@ h1, h2, h3, .card-body> .card-title {
 .navbar-dark {
   background-color: #901CAD;
 }
+
+.page-enter {
+  opacity: 0;
+  transform: translateX(-300%);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateX(50%);
+  transition: 350ms ease-out;
+  
+}
+
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transition: 500ms ease-in;
+}
